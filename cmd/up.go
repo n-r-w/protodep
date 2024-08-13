@@ -7,15 +7,14 @@ import (
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 
-	"github.com/stormcat24/protodep/pkg/logger"
-	"github.com/stormcat24/protodep/pkg/resolver"
+	"github.com/n-r-w/protodep/pkg/logger"
+	"github.com/n-r-w/protodep/pkg/resolver"
 )
 
 var upCmd = &cobra.Command{
 	Use:   "up",
 	Short: "Populate .proto vendors existing protodep.toml and lock",
 	RunE: func(cmd *cobra.Command, args []string) error {
-
 		isForceUpdate, err := cmd.Flags().GetBool("force")
 		if err != nil {
 			return err

@@ -1,4 +1,4 @@
-ROOT_PACKAGE := github.com/stormcat24/protodep
+ROOT_PACKAGE := github.com/n-r-w/protodep
 VERSION_PACKAGE := $(ROOT_PACKAGE)/version
 LDFLAG_GIT_COMMIT := "$(VERSION_PACKAGE).gitCommit"
 LDFLAG_GIT_COMMIT_FULL := "$(VERSION_PACKAGE).gitCommitFull"

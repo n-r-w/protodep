@@ -7,16 +7,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
 	"github.com/mitchellh/go-homedir"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 
-	"github.com/stormcat24/protodep/pkg/auth"
-	"github.com/stormcat24/protodep/pkg/config"
+	"github.com/n-r-w/protodep/pkg/auth"
+	"github.com/n-r-w/protodep/pkg/config"
 )
 
 func TestSync(t *testing.T) {
-
 	homeDir, err := homedir.Dir()
 	require.NoError(t, err)
 
@@ -98,7 +97,6 @@ func TestSync(t *testing.T) {
 		t.Error("not found file [proto/protodep/hierarchy/fuga/fuga.proto]")
 	}
 
-
 	// fetch
 	err = target.Resolve(false, false)
 	require.NoError(t, err)
@@ -110,16 +108,15 @@ func isFileExist(path string) bool {
 }
 
 func TestWriteToml(t *testing.T) {
-
 	config := config.ProtoDep{
 		ProtoOutdir: "./proto",
 		Dependencies: []config.ProtoDepDependency{
-			config.ProtoDepDependency{
+			{
 				Target:   "github.com/openfresh/plasma/protobuf",
 				Branch:   "master",
 				Revision: "d7ee1d95b6700756b293b722a1cfd4b905a351ba",
 			},
-			config.ProtoDepDependency{
+			{
 				Target:   "github.com/grpc-ecosystem/grpc-gateway/examples/examplepb",
 				Branch:   "master",
 				Revision: "c6f7a5ac629444a556bb665e389e41b897ebad39",
@@ -130,7 +127,7 @@ func TestWriteToml(t *testing.T) {
 	destDir := os.TempDir()
 	destFile := filepath.Join(destDir, "protodep.lock")
 
-	require.NoError(t, os.MkdirAll(os.TempDir(), 0777))
+	require.NoError(t, os.MkdirAll(os.TempDir(), 0o777))
 	require.NoError(t, writeToml(destFile, config))
 
 	stat, err := os.Stat(destFile)
@@ -144,7 +141,7 @@ func TestWriteFileWithDirectory(t *testing.T) {
 	testDir := filepath.Join(destDir, "hoge")
 	testFile := filepath.Join(testDir, "fuga.txt")
 
-	err := writeFileWithDirectory(testFile, []byte("test"), 0644)
+	err := writeFileWithDirectory(testFile, []byte("test"), 0o644)
 	require.NoError(t, err)
 
 	stat, err := os.Stat(testFile)

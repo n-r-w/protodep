@@ -1,14 +1,7 @@
 protodep
 =======
 
-![logo](./logo/web.png)
-
-![GitHub Actions](https://github.com/stormcat24/protodep/actions/workflows/go.yml/badge.svg)
-[![Language](https://img.shields.io/badge/language-go-brightgreen.svg?style=flat)](https://golang.org/)
-[![issues](https://img.shields.io/github/issues/stormcat24/protodep.svg?style=flat)](https://github.com/stormcat24/protodep/issues?state=open)
-[![License: Apache License 2.0](https://img.shields.io/badge/license-Apache2-orange.svg)](LICENSE)
-[![GoDoc](https://godoc.org/github.com/stormcat24/protodep?status.png)](https://godoc.org/github.com/stormcat24/protodep)
-[![go.mod](https://img.shields.io/github/go-mod/go-version/stormcat24/protodep)](go.mod)
+# Evolution of <https://github.com/stormcat24/protodep>, which unfortunately has not been updated by the author for a long time
 
 Dependency tool for Protocol Buffers IDL file (.proto) vendoring tool.
 
@@ -23,24 +16,7 @@ If you manage proto files in a git repository, what will you do? Most remote ser
 ### go install
 
 ```bash
-go install -v github.com/stormcat24/protodep@v0.1.7
-```
-
-### from binary
-
-Support as follows:
-
-* protodep_darwin_amd64.tar.gz
-* protodep_darwin_arm64.tar.gz
-* protodep_linux_386.tar.gz
-* protodep_linux_amd64.tar.gz
-* protodep_linux_arm.tar.gz
-* protodep_linux_arm64.tar.gz
-
-```bash
-wget https://github.com/stormcat24/protodep/releases/download/0.1.4/protodep_darwin_amd64.tar.gz
-tar -xf protodep_darwin_amd64.tar.gz
-mv protodep /usr/local/bin/
+go install -v github.com/n-r-w/protodep@v0.1.7
 ```
 
 ## Usage

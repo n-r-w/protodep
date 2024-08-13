@@ -22,7 +22,7 @@ curl -s -X POST \
   \"draft\": true,
   \"prerelease\": true
 }" \
-    https://api.github.com/repos/stormcat24/protodep/releases > .tag.json
+    https://api.github.com/repos/n-r-w/protodep/releases > .tag.json
 
 if [ $? -ne 0 ]; then
   echo "create release failed." 1>&2
