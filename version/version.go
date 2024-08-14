@@ -35,11 +35,11 @@ func Get() Info {
 func (i Info) String() string {
 	if i.Version == unspecified {
 		info, _ := debug.ReadBuildInfo()
-		return fmt.Sprintf(`{"Version": "%s"}`, info.Main.Version)
+		return fmt.Sprintf(`{"Version": %q}`, info.Main.Version)
 	}
 
 	return fmt.Sprintf(
-		`{"Version": "%s", "GitCommit": "%s", "GitCommitFull": "%s", "BuildDate": "%s"}`,
+		`{"Version": %q, "GitCommit": %q, "GitCommitFull": %q, "BuildDate": %q}`,
 		i.Version,
 		i.GitCommit,
 		i.GitCommitFull,

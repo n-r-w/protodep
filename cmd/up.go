@@ -7,14 +7,14 @@ import (
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 
-	"github.com/n-r-w/protodep/pkg/logger"
-	"github.com/n-r-w/protodep/pkg/resolver"
+	"github.com/n-r-w/protodep/internal/logger"
+	"github.com/n-r-w/protodep/internal/resolver"
 )
 
 var upCmd = &cobra.Command{
 	Use:   "up",
 	Short: "Populate .proto vendors existing protodep.toml and lock",
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		isForceUpdate, err := cmd.Flags().GetBool("force")
 		if err != nil {
 			return err
@@ -41,11 +41,17 @@ var upCmd = &cobra.Command{
 			logger.Info("password = %s", strings.Repeat("x", len(password))) // Do not display the password.
 		}
 
-		useHttps, err := cmd.Flags().GetBool("use-https")
+		useHTTPS, err := cmd.Flags().GetBool("use-https")
 		if err != nil {
 			return err
 		}
-		logger.Info("use https = %t", useHttps)
+		logger.Info("use https = %t", useHTTPS)
+
+		useNetrc, err := cmd.Flags().GetBool("use-netrc")
+		if err != nil {
+			return err
+		}
+		logger.Info("use netrc = %t", useNetrc)
 
 		basicAuthUsername, err := cmd.Flags().GetString("basic-auth-username")
 		if err != nil {
@@ -74,7 +80,8 @@ var upCmd = &cobra.Command{
 		}
 
 		conf := resolver.Config{
-			UseHttps:          useHttps,
+			UseHttps:          useHTTPS,
+			UseNetrc:          useNetrc,
 			HomeDir:           homeDir,
 			TargetDir:         pwd,
 			OutputDir:         pwd,
@@ -84,7 +91,17 @@ var upCmd = &cobra.Command{
 			IdentityPassword:  password,
 		}
 
-		updateService, err := resolver.New(&conf)
+		httpsProvider, err := conf.GetHttpsAuthProvider()
+		if err != nil {
+			return err
+		}
+
+		sshProvider, err := conf.GetSshAuthProvider()
+		if err != nil {
+			return err
+		}
+
+		updateService, err := resolver.New(&conf, httpsProvider, sshProvider)
 		if err != nil {
 			return err
 		}
@@ -99,6 +116,7 @@ func initDepCmd() {
 	upCmd.PersistentFlags().StringP("password", "p", "", "set the password for SSH")
 	upCmd.PersistentFlags().BoolP("cleanup", "c", false, "cleanup cache before exec.")
 	upCmd.PersistentFlags().BoolP("use-https", "u", false, "use HTTPS to get dependencies.")
+	upCmd.PersistentFlags().BoolP("use-netrc", "n", true, "use netrc file for authentication")
 	upCmd.PersistentFlags().StringP("basic-auth-username", "", "", "set the username with Basic Auth via HTTPS")
 	upCmd.PersistentFlags().StringP("basic-auth-password", "", "", "set the password or personal access token(when enabled 2FA) with Basic Auth via HTTPS")
 }

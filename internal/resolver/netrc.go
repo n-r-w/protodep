@@ -15,6 +15,8 @@ type netrcLine struct {
 	password string
 }
 
+const defaultToken = "default"
+
 func parseNetrc(data string) []netrcLine {
 	// See https://www.gnu.org/software/inetutils/manual/html_node/The-_002enetrc-file.html
 	// for documentation on the .netrc format.
@@ -40,8 +42,7 @@ func parseNetrc(data string) []netrcLine {
 			switch f[i] {
 			case "machine":
 				l = netrcLine{machine: f[i+1]}
-			case "default":
-				break
+			case defaultToken:
 			case "login":
 				l.login = f[i+1]
 			case "password":
@@ -58,7 +59,7 @@ func parseNetrc(data string) []netrcLine {
 			}
 		}
 
-		if i < len(f) && f[i] == "default" {
+		if i < len(f) && f[i] == defaultToken {
 			// “There can be only one default token, and it must be after all machine tokens.”
 			break
 		}
@@ -88,7 +89,7 @@ func readNetrc() ([]netrcLine, error) {
 		return nil, err
 	}
 
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(filepath.Clean(path))
 	if err != nil {
 		return nil, err
 	}

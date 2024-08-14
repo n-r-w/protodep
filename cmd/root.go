@@ -27,6 +27,7 @@ var RootCmd = &cobra.Command{
 	Short: "Manage vendor for Protocol Buffer IDL file (.proto)",
 }
 
+// Execute executes the root command.
 func Execute() {
 	if err := RootCmd.Execute(); err != nil {
 		color.Red(err.Error())
@@ -39,5 +40,4 @@ func init() {
 }
 
 func initConfig() {
-
 }

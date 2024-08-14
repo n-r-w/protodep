@@ -8,10 +8,12 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 
-	"github.com/n-r-w/protodep/pkg/auth"
-	"github.com/n-r-w/protodep/pkg/config"
-	"github.com/n-r-w/protodep/pkg/logger"
+	"github.com/n-r-w/protodep/internal/auth"
+	"github.com/n-r-w/protodep/internal/config"
+	"github.com/n-r-w/protodep/internal/logger"
 )
+
+const masterBranch = "master"
 
 type Git interface {
 	Open() (*OpenedRepository, error)
@@ -39,7 +41,7 @@ type OpenedRepository struct {
 }
 
 func (r *github) Open() (*OpenedRepository, error) {
-	branch := "master"
+	branch := masterBranch
 	if r.dep.Branch != "" {
 		branch = r.dep.Branch
 	}
@@ -49,14 +51,17 @@ func (r *github) Open() (*OpenedRepository, error) {
 	reponame := r.dep.Repository()
 	repopath := filepath.Join(r.protodepDir, reponame)
 
-	auth, err := r.authProvider.AuthMethod()
+	authMethod, err := r.authProvider.AuthMethod()
 	if err != nil {
 		return nil, err
 	}
 
-	var rep *git.Repository
+	var (
+		rep  *git.Repository
+		stat os.FileInfo
+	)
 
-	if stat, err := os.Stat(repopath); err == nil && stat.IsDir() {
+	if stat, err = os.Stat(repopath); err == nil && stat.IsDir() {
 		spinner := logger.InfoWithSpinner("Getting %s ", reponame)
 
 		rep, err = git.PlainOpen(repopath)
@@ -66,13 +71,13 @@ func (r *github) Open() (*OpenedRepository, error) {
 		spinner.Stop()
 
 		fetchOpts := &git.FetchOptions{
-			Auth: auth,
+			Auth: authMethod,
 		}
 
 		// TODO: Validate remote setting.
 		// TODO: If .protodep cache remains with SSH, change remote target to HTTPS.
 
-		if err := rep.Fetch(fetchOpts); err != nil {
+		if err = rep.Fetch(fetchOpts); err != nil {
 			if err != git.NoErrAlreadyUpToDate {
 				return nil, fmt.Errorf("fetch repository: %w", err)
 			}
@@ -83,7 +88,7 @@ func (r *github) Open() (*OpenedRepository, error) {
 		spinner := logger.InfoWithSpinner("Getting %s ", reponame)
 		// IDEA: Is it better to register both ssh and HTTP?
 		rep, err = git.PlainClone(repopath, false, &git.CloneOptions{
-			Auth: auth,
+			Auth: authMethod,
 			URL:  r.authProvider.GetRepositoryURL(reponame),
 		})
 		if err != nil {
@@ -98,24 +103,25 @@ func (r *github) Open() (*OpenedRepository, error) {
 	}
 
 	if revision == "" {
-		target, err := r.resolveReference(rep, branch)
+		var target *plumbing.Reference
+		target, err = r.resolveReference(rep, branch)
 		if err != nil {
 			return nil, fmt.Errorf("change branch to %s: %w", branch, err)
 		}
 
-		if err := wt.Checkout(&git.CheckoutOptions{Hash: target.Hash()}); err != nil {
+		if err = wt.Checkout(&git.CheckoutOptions{Hash: target.Hash()}); err != nil {
 			return nil, fmt.Errorf("checkout revision to %s: %w", revision, err)
 		}
 
 		head := plumbing.NewHashReference(plumbing.HEAD, target.Hash())
-		if err := rep.Storer.SetReference(head); err != nil {
+		if err = rep.Storer.SetReference(head); err != nil {
 			return nil, fmt.Errorf("set head to %s: %w", branch, err)
 		}
 	} else {
 		var opts git.CheckoutOptions
 
 		tag := plumbing.NewTagReferenceName(revision)
-		_, err := rep.Reference(tag, false)
+		_, err = rep.Reference(tag, false)
 		if err != nil && err != plumbing.ErrReferenceNotFound {
 			return nil, fmt.Errorf("tag '%s' reference: %w", tag, err)
 		} else {
@@ -130,7 +136,7 @@ func (r *github) Open() (*OpenedRepository, error) {
 			}
 		}
 
-		if err := wt.Checkout(&opts); err != nil {
+		if err = wt.Checkout(&opts); err != nil {
 			return nil, fmt.Errorf("checkout to %s: %w", revision, err)
 		}
 	}
@@ -157,7 +163,7 @@ func (r *github) ProtoRootDir() string {
 }
 
 func (r *github) resolveReference(rep *git.Repository, branch string) (*plumbing.Reference, error) {
-	if branch != "master" {
+	if branch != masterBranch {
 		return r.getReference(rep, branch)
 	}
 	// If master branch is failed, try main branch.

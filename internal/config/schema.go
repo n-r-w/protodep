@@ -37,7 +37,7 @@ func (d *ProtoDepDependency) Repository() string {
 	if d.Subgroup != "" {
 		subgroupTokens = strings.Split(d.Subgroup, "/")
 	}
-	repoTokens := 3 + len(subgroupTokens)
+	repoTokens := 3 + len(subgroupTokens) //nolint:gomnd
 	if len(tokens) > repoTokens {
 		return strings.Join(tokens[0:repoTokens], "/")
 	} else {

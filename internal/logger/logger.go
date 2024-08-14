@@ -2,23 +2,24 @@ package logger
 
 import (
 	"fmt"
-	"github.com/mattn/go-isatty"
 	"os"
 	"time"
+
+	"github.com/mattn/go-isatty"
 
 	"github.com/briandowns/spinner"
 	"github.com/fatih/color"
 )
 
-func Info(format string, a ...interface{}) {
+func Info(format string, a ...any) {
 	color.Green("[INFO] "+format, a...)
 }
 
-func Warn(format string, a ...interface{}) {
+func Warn(format string, a ...any) {
 	color.Yellow("[WARN] "+format, a...)
 }
 
-func Error(format string, a ...interface{}) {
+func Error(format string, a ...any) {
 	color.Red("[ERROR] "+format, a...)
 }
 
@@ -39,14 +40,14 @@ func (s *spinnerWrapper) Finish() {
 	fmt.Print("\n")
 }
 
-func InfoWithSpinner(format string, a ...interface{}) *spinnerWrapper {
+func InfoWithSpinner(format string, a ...any) *spinnerWrapper {
 	txt := color.GreenString("[INFO] "+format, a...)
 	fmt.Print(txt)
 
 	var s *spinner.Spinner
 	if isatty.IsTerminal(os.Stdout.Fd()) {
 		fmt.Print("\n")
-		s = spinner.New(spinner.CharSets[38], 100*time.Millisecond) // Build our new spinner
+		s = spinner.New(spinner.CharSets[38], 100*time.Millisecond) //nolint:gomnd // Build our new spinner
 		s.Start()
 	}
 

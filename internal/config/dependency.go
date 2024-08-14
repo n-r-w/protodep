@@ -14,7 +14,7 @@ type Dependency interface {
 }
 
 type DependencyImpl struct {
-	targetDir string
+	targetDir   string
 	tomlPath    string
 	lockPath    string
 	forceUpdate bool
@@ -30,7 +30,6 @@ func NewDependency(targetDir string, forceUpdate bool) Dependency {
 }
 
 func (d *DependencyImpl) Load() (*ProtoDep, error) {
-
 	var targetConfig string
 	if d.IsNeedWriteLockFile() {
 		targetConfig = d.tomlPath
@@ -38,18 +37,18 @@ func (d *DependencyImpl) Load() (*ProtoDep, error) {
 		targetConfig = d.lockPath
 	}
 
-	content, err := os.ReadFile(targetConfig)
+	content, err := os.ReadFile(filepath.Clean(targetConfig))
 	if err != nil {
 		return nil, fmt.Errorf("load %s: %w", targetConfig, err)
 	}
 
 	var conf ProtoDep
 	if _, err := toml.Decode(string(content), &conf); err != nil {
-		return nil, fmt.Errorf( "decode toml: %w", err)
+		return nil, fmt.Errorf("decode toml: %w", err)
 	}
 
 	if err := conf.Validate(); err != nil {
-		return nil, fmt.Errorf( "found invalid configuration: %w", err)
+		return nil, fmt.Errorf("found invalid configuration: %w", err)
 	}
 
 	return &conf, nil

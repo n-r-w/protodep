@@ -9,10 +9,10 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/gobwas/glob"
-	"github.com/n-r-w/protodep/pkg/auth"
-	"github.com/n-r-w/protodep/pkg/config"
-	"github.com/n-r-w/protodep/pkg/logger"
-	"github.com/n-r-w/protodep/pkg/repository"
+	"github.com/n-r-w/protodep/internal/auth"
+	"github.com/n-r-w/protodep/internal/config"
+	"github.com/n-r-w/protodep/internal/logger"
+	"github.com/n-r-w/protodep/internal/repository"
 )
 
 type protoResource struct {
@@ -20,34 +20,33 @@ type protoResource struct {
 	relativeDest string
 }
 
-type Resolver interface {
-	Resolve(forceUpdate bool, cleanupCache bool) error
-
-	SetHttpsAuthProvider(provider auth.AuthProvider)
-	SetSshAuthProvider(provider auth.AuthProvider)
-}
-
-type resolver struct {
+type Resolver struct {
 	conf *Config
 
 	httpsProvider auth.AuthProvider
 	sshProvider   auth.AuthProvider
+
+	netrcInfo []netrcLine
 }
 
-func New(conf *Config) (Resolver, error) {
-	s := &resolver{
-		conf: conf,
+func New(conf *Config, httpsProvider, sshProvider auth.AuthProvider) (*Resolver, error) {
+	s := &Resolver{
+		conf:          conf,
+		httpsProvider: httpsProvider,
+		sshProvider:   sshProvider,
 	}
 
-	err := s.initAuthProviders()
-	if err != nil {
-		return nil, err
+	netrcInfo, err := readNetrc()
+	if err != nil && !os.IsNotExist(err) {
+		return nil, fmt.Errorf("read netrc: %w", err)
 	}
+
+	s.netrcInfo = netrcInfo
 
 	return s, nil
 }
 
-func (s *resolver) Resolve(forceUpdate bool, cleanupCache bool) error {
+func (s *Resolver) Resolve(forceUpdate, cleanupCache bool) error { //nolint:gocognit
 	dep := config.NewDependency(s.conf.TargetDir, forceUpdate)
 	protodep, err := dep.Load()
 	if err != nil {
@@ -78,12 +77,6 @@ func (s *resolver) Resolve(forceUpdate bool, cleanupCache bool) error {
 		return err
 	}
 
-	var netrcInfo []netrcLine
-	netrcInfo, err = readNetrc()
-	if err != nil && !os.IsNotExist(err) {
-		logger.Warn("netrc file error: %v", err)
-	}
-
 	for _, dep := range protodep.Dependencies {
 		var sources []protoResource
 
@@ -107,7 +100,7 @@ func (s *resolver) Resolve(forceUpdate bool, cleanupCache bool) error {
 				return err
 			}
 		} else if dep.Target != "" {
-			gitrepo, err := s.getRepository(dep, protodepDir, netrcInfo)
+			gitrepo, err := s.getRepository(dep, protodepDir)
 			if err != nil {
 				return err
 			}
@@ -130,7 +123,7 @@ func (s *resolver) Resolve(forceUpdate bool, cleanupCache bool) error {
 				return err
 			}
 
-			if err := writeFileWithDirectory(outpath, content, 0o644); err != nil {
+			if err := writeFileWithDirectory(outpath, content, 0o644); err != nil { //nolint:gomnd
 				return err
 			}
 		}
@@ -152,7 +145,7 @@ func (s *resolver) Resolve(forceUpdate bool, cleanupCache bool) error {
 	return nil
 }
 
-func (s *resolver) getRepository(dep config.ProtoDepDependency, protodepDir string, netrcInfo []netrcLine) (repository.Git, error) {
+func (s *Resolver) getRepository(dep config.ProtoDepDependency, protodepDir string) (repository.Git, error) {
 	var (
 		authProvider           auth.AuthProvider
 		userName, userPassword string
@@ -173,10 +166,10 @@ func (s *resolver) getRepository(dep config.ProtoDepDependency, protodepDir stri
 		if userPassword == "" {
 			return nil, fmt.Errorf("auth_password_env %s is empty", dep.PasswordEnv)
 		}
-	} else {
+	} else if s.conf.UseNetrc {
 		machine := dep.Machine()
 
-		for _, netrc := range netrcInfo {
+		for _, netrc := range s.netrcInfo {
 			if netrc.machine == machine && netrc.login != "" && netrc.password != "" {
 				userName = netrc.login
 				userPassword = netrc.password
@@ -203,7 +196,7 @@ func (s *resolver) getRepository(dep config.ProtoDepDependency, protodepDir stri
 	return repository.NewGit(protodepDir, dep, authProvider), nil
 }
 
-func (s *resolver) getSources(dep config.ProtoDepDependency, protoRootDir string) ([]protoResource, error) {
+func (s *Resolver) getSources(dep config.ProtoDepDependency, protoRootDir string) ([]protoResource, error) {
 	sources := make([]protoResource, 0)
 
 	compiledIgnores := compileIgnoreToGlob(dep.Ignores)
@@ -239,39 +232,6 @@ func (s *resolver) getSources(dep config.ProtoDepDependency, protoRootDir string
 	return sources, nil
 }
 
-func (s *resolver) SetHttpsAuthProvider(provider auth.AuthProvider) {
-	s.httpsProvider = provider
-}
-
-func (s *resolver) SetSshAuthProvider(provider auth.AuthProvider) {
-	s.sshProvider = provider
-}
-
-func (s *resolver) initAuthProviders() error {
-	s.httpsProvider = auth.NewAuthProvider(auth.WithHTTPS(s.conf.BasicAuthUsername, s.conf.BasicAuthPassword))
-
-	if s.conf.IdentityFile == "" && s.conf.IdentityPassword == "" {
-		s.sshProvider = auth.NewAuthProvider()
-
-		return nil
-	}
-
-	identifyPath := filepath.Join(s.conf.HomeDir, ".ssh", s.conf.IdentityFile)
-	isSSH, err := isAvailableSSH(identifyPath)
-	if err != nil {
-		return err
-	}
-
-	if isSSH {
-		s.sshProvider = auth.NewAuthProvider(auth.WithPemFile(identifyPath, s.conf.IdentityPassword))
-	} else {
-		logger.Warn("The identity file path has been passed but is not available. Falling back to ssh-agent, the default authentication method.")
-		s.sshProvider = auth.NewAuthProvider()
-	}
-
-	return nil
-}
-
 func compileIgnoreToGlob(ignores []string) []glob.Glob {
 	globIgnores := make([]glob.Glob, len(ignores))
 
@@ -282,7 +242,7 @@ func compileIgnoreToGlob(ignores []string) []glob.Glob {
 	return globIgnores
 }
 
-func (s *resolver) isMatchPath(protoRootDir string, target string, paths []string, globMatch []glob.Glob) bool {
+func (s *Resolver) isMatchPath(protoRootDir, target string, paths []string, globMatch []glob.Glob) bool {
 	// convert slashes otherwise doesnt work on windows same was as on linux
 	target = filepath.ToSlash(target)
 
@@ -304,14 +264,14 @@ func (s *resolver) isMatchPath(protoRootDir string, target string, paths []strin
 	return false
 }
 
-func writeToml(dest string, input interface{}) error {
+func writeToml(dest string, input any) error {
 	var buffer bytes.Buffer
 	encoder := toml.NewEncoder(&buffer)
 	if err := encoder.Encode(input); err != nil {
 		return fmt.Errorf("encode config to toml format: %w", err)
 	}
 
-	if err := os.WriteFile(dest, buffer.Bytes(), 0o644); err != nil {
+	if err := os.WriteFile(dest, buffer.Bytes(), 0o600); err != nil { //nolint:gomnd
 		return fmt.Errorf("write to %s: %w", dest, err)
 	}
 
@@ -332,7 +292,7 @@ func writeFileWithDirectory(path string, data []byte, perm os.FileMode) error {
 	dir = filepath.FromSlash(dir)
 	path = filepath.FromSlash(path)
 
-	if err := os.MkdirAll(dir, 0o777); err != nil {
+	if err := os.MkdirAll(dir, 0o750); err != nil { //nolint:gomnd
 		return fmt.Errorf("create directory %s: %w", dir, err)
 	}
 

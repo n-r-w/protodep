@@ -20,7 +20,7 @@ const art = `
 var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Show protodep version",
-	RunE: func(cdm *cobra.Command, args []string) error {
+	RunE: func(_ *cobra.Command, _ []string) error {
 		fmt.Println(art)
 		fmt.Println("")
 		fmt.Println(version.Get())

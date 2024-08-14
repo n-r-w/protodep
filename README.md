@@ -1,9 +1,13 @@
-protodep
+protodep - dependency tool for Protocol Buffers IDL file (.proto) vendoring tool
 =======
 
-# Evolution of <https://github.com/stormcat24/protodep>, which unfortunately has not been updated by the author for a long time
+## Evolution of <https://github.com/stormcat24/protodep>, which unfortunately has not been updated by the author for a long time
 
-Dependency tool for Protocol Buffers IDL file (.proto) vendoring tool.
+## What's new in this fork (compared to the original project)
+
+- [x] Added support for .netrc file
+- [x] Added support for local proto files import
+- [x] Added support for gitlab subgroups
 
 ## Motivation
 
@@ -16,7 +20,7 @@ If you manage proto files in a git repository, what will you do? Most remote ser
 ### go install
 
 ```bash
-go install -v github.com/n-r-w/protodep@v0.1.7
+go install -v github.com/n-r-w/protodep@latest
 ```
 
 ## Usage
@@ -87,18 +91,6 @@ Even if protodep.lock exists, you can force update dependenies.
 
 ```bash
 protodep up -f
-```
-
-### [Attention] Changes from 0.1.0
-
-From protodep 0.1.0 supports ssh-agent, and this is the default.
-In other words, in order to operate protodep without options as before, it is necessary to set with ssh-add.
-
-As the follows:
-
-```bash
-ssh-add ~/.ssh/id_rsa
-protodep up
 ```
 
 ### Getting via HTTPS

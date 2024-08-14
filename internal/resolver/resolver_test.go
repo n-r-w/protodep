@@ -11,8 +11,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	"github.com/n-r-w/protodep/pkg/auth"
-	"github.com/n-r-w/protodep/pkg/config"
+	"github.com/n-r-w/protodep/internal/auth"
+	"github.com/n-r-w/protodep/internal/config"
 )
 
 func TestSync(t *testing.T) {
@@ -36,9 +36,6 @@ func TestSync(t *testing.T) {
 		OutputDir: outputRootDir,
 	}
 
-	target, err := New(&conf)
-	require.NoError(t, err)
-
 	c := gomock.NewController(t)
 	defer c.Finish()
 
@@ -51,8 +48,8 @@ func TestSync(t *testing.T) {
 	sshAuthProviderMock.EXPECT().AuthMethod().Return(nil, nil).AnyTimes()
 	sshAuthProviderMock.EXPECT().GetRepositoryURL("github.com/opensaasstudio/plasma").Return("https://github.com/opensaasstudio/plasma.git")
 
-	target.SetHttpsAuthProvider(httpsAuthProviderMock)
-	target.SetSshAuthProvider(sshAuthProviderMock)
+	target, err := New(&conf, httpsAuthProviderMock, sshAuthProviderMock)
+	require.NoError(t, err)
 
 	// clone
 	err = target.Resolve(false, false)

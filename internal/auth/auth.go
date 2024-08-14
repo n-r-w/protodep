@@ -14,13 +14,16 @@ type authMethod string
 
 const (
 	SSHAgent authMethod = "SSHAgent"
-	SSH                 = "SSH"
-	HTTPS               = "HTTPS"
+)
+
+const (
+	SSH   = "SSH"
+	HTTPS = "HTTPS"
 )
 
 type authOptions struct {
-	method  authMethod
-	pemFile string
+	method   authMethod
+	pemFile  string
 	username string
 	password string
 }
@@ -47,8 +50,7 @@ type AuthProviderWithSSH struct {
 	password string
 }
 
-type AuthProviderWithSSHAgent struct {
-}
+type AuthProviderWithSSHAgent struct{}
 
 type AuthProviderHTTPS struct {
 	username string
