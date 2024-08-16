@@ -8,23 +8,19 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
-type Dependency interface {
-	Load() (*ProtoDep, error)
-}
-
-type DependencyImpl struct {
+type Dependency struct {
 	targetDir string
 	tomlPath  string
 }
 
-func NewDependency(targetDir string) Dependency {
-	return &DependencyImpl{
+func NewDependency(targetDir string) *Dependency {
+	return &Dependency{
 		targetDir: targetDir,
 		tomlPath:  filepath.Join(targetDir, "protodep.toml"),
 	}
 }
 
-func (d *DependencyImpl) Load() (*ProtoDep, error) {
+func (d *Dependency) Load() (*ProtoDep, error) {
 	content, err := os.ReadFile(filepath.Clean(d.tomlPath))
 	if err != nil {
 		return nil, fmt.Errorf("load %s: %w", d.tomlPath, err)

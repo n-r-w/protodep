@@ -130,7 +130,7 @@ func (s *Resolver) Resolve(cleanupCache bool) error { //nolint:gocognit
 	return nil
 }
 
-func (s *Resolver) getRepository(dep config.ProtoDepDependency, protodepDir string) (repository.Git, error) {
+func (s *Resolver) getRepository(dep config.ProtoDepDependency, protodepDir string) (*repository.Git, error) {
 	var (
 		authProvider           auth.AuthProvider
 		userName, userPassword string
