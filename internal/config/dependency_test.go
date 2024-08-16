@@ -10,7 +10,7 @@ import (
 func TestLoad(t *testing.T) {
 
 	pwd, _ := os.Getwd()
-	target := NewDependency(pwd, false)
+	target := NewDependency(pwd)
 
 	actual, err := target.Load()
 	require.NoError(t, err)

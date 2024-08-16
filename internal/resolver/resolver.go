@@ -1,13 +1,11 @@
 package resolver
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/BurntSushi/toml"
 	"github.com/gobwas/glob"
 	"github.com/n-r-w/protodep/internal/auth"
 	"github.com/n-r-w/protodep/internal/config"
@@ -46,14 +44,13 @@ func New(conf *Config, httpsProvider, sshProvider auth.AuthProvider) (*Resolver,
 	return s, nil
 }
 
-func (s *Resolver) Resolve(forceUpdate, cleanupCache bool) error { //nolint:gocognit
-	dep := config.NewDependency(s.conf.TargetDir, forceUpdate)
+func (s *Resolver) Resolve(cleanupCache bool) error { //nolint:gocognit
+	dep := config.NewDependency(s.conf.TargetDir)
 	protodep, err := dep.Load()
 	if err != nil {
 		return err
 	}
 
-	newdeps := make([]config.ProtoDepDependency, 0, len(protodep.Dependencies))
 	protodepDir := filepath.Join(s.conf.HomeDir, ".protodep")
 
 	_, err = os.Stat(protodepDir)
@@ -128,24 +125,12 @@ func (s *Resolver) Resolve(forceUpdate, cleanupCache bool) error { //nolint:goco
 			}
 		}
 
-		newdeps = append(newdeps, dep)
-	}
-
-	newProtodep := config.ProtoDep{
-		ProtoOutdir:  protodep.ProtoOutdir,
-		Dependencies: newdeps,
-	}
-
-	if dep.IsNeedWriteLockFile() {
-		if err := writeToml("protodep.lock", newProtodep); err != nil {
-			return err
-		}
 	}
 
 	return nil
 }
 
-func (s *Resolver) getRepository(dep config.ProtoDepDependency, protodepDir string) (repository.Git, error) {
+func (s *Resolver) getRepository(dep config.ProtoDepDependency, protodepDir string) (*repository.Git, error) {
 	var (
 		authProvider           auth.AuthProvider
 		userName, userPassword string
@@ -262,20 +247,6 @@ func (s *Resolver) isMatchPath(protoRootDir, target string, paths []string, glob
 	}
 
 	return false
-}
-
-func writeToml(dest string, input any) error {
-	var buffer bytes.Buffer
-	encoder := toml.NewEncoder(&buffer)
-	if err := encoder.Encode(input); err != nil {
-		return fmt.Errorf("encode config to toml format: %w", err)
-	}
-
-	if err := os.WriteFile(dest, buffer.Bytes(), 0o600); err != nil { //nolint:gomnd
-		return fmt.Errorf("write to %s: %w", dest, err)
-	}
-
-	return nil
 }
 
 func writeFileWithDirectory(path string, data []byte, perm os.FileMode) error {

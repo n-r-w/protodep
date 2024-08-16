@@ -13,14 +13,8 @@ import (
 
 var upCmd = &cobra.Command{
 	Use:   "up",
-	Short: "Populate .proto vendors existing protodep.toml and lock",
+	Short: "Populate .proto vendors existing protodep.toml",
 	RunE: func(cmd *cobra.Command, _ []string) error {
-		isForceUpdate, err := cmd.Flags().GetBool("force")
-		if err != nil {
-			return err
-		}
-		logger.Info("force update = %t", isForceUpdate)
-
 		isCleanupCache, err := cmd.Flags().GetBool("cleanup")
 		if err != nil {
 			return err
@@ -106,12 +100,11 @@ var upCmd = &cobra.Command{
 			return err
 		}
 
-		return updateService.Resolve(isForceUpdate, isCleanupCache)
+		return updateService.Resolve(isCleanupCache)
 	},
 }
 
 func initDepCmd() {
-	upCmd.PersistentFlags().BoolP("force", "f", false, "update locked file and .proto vendors")
 	upCmd.PersistentFlags().StringP("identity-file", "i", "", "set the identity file for SSH")
 	upCmd.PersistentFlags().StringP("password", "p", "", "set the password for SSH")
 	upCmd.PersistentFlags().BoolP("cleanup", "c", false, "cleanup cache before exec.")

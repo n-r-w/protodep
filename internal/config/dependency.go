@@ -8,38 +8,22 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
-type Dependency interface {
-	Load() (*ProtoDep, error)
-	IsNeedWriteLockFile() bool
+type Dependency struct {
+	targetDir string
+	tomlPath  string
 }
 
-type DependencyImpl struct {
-	targetDir   string
-	tomlPath    string
-	lockPath    string
-	forceUpdate bool
-}
-
-func NewDependency(targetDir string, forceUpdate bool) Dependency {
-	return &DependencyImpl{
-		targetDir:   targetDir,
-		tomlPath:    filepath.Join(targetDir, "protodep.toml"),
-		lockPath:    filepath.Join(targetDir, "protodep.lock"),
-		forceUpdate: forceUpdate,
+func NewDependency(targetDir string) *Dependency {
+	return &Dependency{
+		targetDir: targetDir,
+		tomlPath:  filepath.Join(targetDir, "protodep.toml"),
 	}
 }
 
-func (d *DependencyImpl) Load() (*ProtoDep, error) {
-	var targetConfig string
-	if d.IsNeedWriteLockFile() {
-		targetConfig = d.tomlPath
-	} else {
-		targetConfig = d.lockPath
-	}
-
-	content, err := os.ReadFile(filepath.Clean(targetConfig))
+func (d *Dependency) Load() (*ProtoDep, error) {
+	content, err := os.ReadFile(filepath.Clean(d.tomlPath))
 	if err != nil {
-		return nil, fmt.Errorf("load %s: %w", targetConfig, err)
+		return nil, fmt.Errorf("load %s: %w", d.tomlPath, err)
 	}
 
 	var conf ProtoDep
@@ -52,13 +36,4 @@ func (d *DependencyImpl) Load() (*ProtoDep, error) {
 	}
 
 	return &conf, nil
-}
-
-func (d *DependencyImpl) hasLockFile() bool {
-	_, err := os.Stat(d.lockPath)
-	return err == nil
-}
-
-func (d *DependencyImpl) IsNeedWriteLockFile() bool {
-	return d.forceUpdate || !d.hasLockFile()
 }

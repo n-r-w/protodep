@@ -8,6 +8,8 @@ protodep - dependency tool for Protocol Buffers IDL file (.proto) vendoring tool
 - [x] Added support for .netrc file
 - [x] Added support for local proto files import
 - [x] Added support for gitlab subgroups
+- [x] `protodep.lock` file removed
+- [x] `-f`, `--force` option removed
 
 ## Motivation
 
@@ -81,16 +83,6 @@ In same directory, execute this command.
 
 ```bash
 protodep up
-```
-
-If succeeded, `protodep.lock` is generated.
-
-### protodep up -f (force update)
-
-Even if protodep.lock exists, you can force update dependenies.
-
-```bash
-protodep up -f
 ```
 
 ### Getting via HTTPS

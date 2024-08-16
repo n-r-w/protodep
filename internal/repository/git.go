@@ -15,19 +15,14 @@ import (
 
 const masterBranch = "master"
 
-type Git interface {
-	Open() (*OpenedRepository, error)
-	ProtoRootDir() string
-}
-
-type github struct {
+type Git struct {
 	protodepDir  string
 	dep          config.ProtoDepDependency
 	authProvider auth.AuthProvider
 }
 
-func NewGit(protodepDir string, dep config.ProtoDepDependency, authProvider auth.AuthProvider) Git {
-	return &github{
+func NewGit(protodepDir string, dep config.ProtoDepDependency, authProvider auth.AuthProvider) *Git {
+	return &Git{
 		protodepDir:  protodepDir,
 		dep:          dep,
 		authProvider: authProvider,
@@ -40,7 +35,7 @@ type OpenedRepository struct {
 	Hash       string
 }
 
-func (r *github) Open() (*OpenedRepository, error) {
+func (r *Git) Open() (*OpenedRepository, error) {
 	branch := masterBranch
 	if r.dep.Branch != "" {
 		branch = r.dep.Branch
@@ -158,11 +153,11 @@ func (r *github) Open() (*OpenedRepository, error) {
 	}, nil
 }
 
-func (r *github) ProtoRootDir() string {
+func (r *Git) ProtoRootDir() string {
 	return filepath.Join(r.protodepDir, r.dep.Target)
 }
 
-func (r *github) resolveReference(rep *git.Repository, branch string) (*plumbing.Reference, error) {
+func (r *Git) resolveReference(rep *git.Repository, branch string) (*plumbing.Reference, error) {
 	if branch != masterBranch {
 		return r.getReference(rep, branch)
 	}
@@ -177,6 +172,6 @@ func (r *github) resolveReference(rep *git.Repository, branch string) (*plumbing
 	return target, nil
 }
 
-func (r *github) getReference(rep *git.Repository, branch string) (*plumbing.Reference, error) {
+func (r *Git) getReference(rep *git.Repository, branch string) (*plumbing.Reference, error) {
 	return rep.Storer.Reference(plumbing.ReferenceName(fmt.Sprintf("refs/remotes/origin/%s", branch)))
 }

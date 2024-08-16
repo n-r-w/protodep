@@ -20,7 +20,7 @@ curl -s -X POST \
   \"name\": \"$TAG\",
   \"body\": \"$TAG\",
   \"draft\": true,
-  \"prerelease\": true
+  \"prerelease\": false
 }" \
     https://api.github.com/repos/n-r-w/protodep/releases > .tag.json
 
@@ -44,3 +44,7 @@ do
     exit 1
   fi
 done
+
+rm .tag.json
+
+echo "release success." 1>&2
