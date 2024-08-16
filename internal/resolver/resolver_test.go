@@ -12,7 +12,6 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/n-r-w/protodep/internal/auth"
-	"github.com/n-r-w/protodep/internal/config"
 )
 
 func TestSync(t *testing.T) {
@@ -52,7 +51,7 @@ func TestSync(t *testing.T) {
 	require.NoError(t, err)
 
 	// clone
-	err = target.Resolve(false, false)
+	err = target.Resolve(false)
 	require.NoError(t, err)
 
 	if !isFileExist(filepath.Join(outputRootDir, "proto/stream.proto")) {
@@ -95,42 +94,13 @@ func TestSync(t *testing.T) {
 	}
 
 	// fetch
-	err = target.Resolve(false, false)
+	err = target.Resolve(false)
 	require.NoError(t, err)
 }
 
 func isFileExist(path string) bool {
 	_, err := os.Stat(path)
 	return !os.IsNotExist(err)
-}
-
-func TestWriteToml(t *testing.T) {
-	config := config.ProtoDep{
-		ProtoOutdir: "./proto",
-		Dependencies: []config.ProtoDepDependency{
-			{
-				Target:   "github.com/openfresh/plasma/protobuf",
-				Branch:   "master",
-				Revision: "d7ee1d95b6700756b293b722a1cfd4b905a351ba",
-			},
-			{
-				Target:   "github.com/grpc-ecosystem/grpc-gateway/examples/examplepb",
-				Branch:   "master",
-				Revision: "c6f7a5ac629444a556bb665e389e41b897ebad39",
-			},
-		},
-	}
-
-	destDir := os.TempDir()
-	destFile := filepath.Join(destDir, "protodep.lock")
-
-	require.NoError(t, os.MkdirAll(os.TempDir(), 0o777))
-	require.NoError(t, writeToml(destFile, config))
-
-	stat, err := os.Stat(destFile)
-	require.NoError(t, err)
-
-	require.True(t, !stat.IsDir())
 }
 
 func TestWriteFileWithDirectory(t *testing.T) {
