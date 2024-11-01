@@ -74,20 +74,21 @@ func (r *Git) Open() (*OpenedRepository, error) {
 
 		if err = rep.Fetch(fetchOpts); err != nil {
 			if err != git.NoErrAlreadyUpToDate {
-				return nil, fmt.Errorf("fetch repository: %w", err)
+				return nil, fmt.Errorf("fetch repository %s: %w", repopath, err)
 			}
 		}
 		spinner.Finish()
 
 	} else {
 		spinner := logger.InfoWithSpinner("Getting %s ", reponame)
+		url := r.authProvider.GetRepositoryURL(reponame)
 		// IDEA: Is it better to register both ssh and HTTP?
 		rep, err = git.PlainClone(repopath, false, &git.CloneOptions{
 			Auth: authMethod,
-			URL:  r.authProvider.GetRepositoryURL(reponame),
+			URL:  url,
 		})
 		if err != nil {
-			return nil, fmt.Errorf("clone repository: %w", err)
+			return nil, fmt.Errorf("clone repository %s: %w", url, err)
 		}
 		spinner.Finish()
 	}
