@@ -61,7 +61,7 @@ func (r *Git) Open() (*OpenedRepository, error) {
 
 		rep, err = git.PlainOpen(repopath)
 		if err != nil {
-			return nil, fmt.Errorf("open repository: %w", err)
+			return nil, fmt.Errorf("open repository %s: %w", repopath, err)
 		}
 		spinner.Stop()
 
