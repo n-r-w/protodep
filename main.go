@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/n-r-w/protodep/cmd"
+	"github.com/torqio/protodep/cmd"
 )
 
 func main() {

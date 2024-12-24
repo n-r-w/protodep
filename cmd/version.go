@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/n-r-w/protodep/version"
+	"github.com/torqio/protodep/version"
 )
 
 const art = `

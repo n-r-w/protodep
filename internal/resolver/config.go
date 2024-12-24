@@ -4,13 +4,16 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/n-r-w/protodep/internal/auth"
-	"github.com/n-r-w/protodep/internal/logger"
+	"github.com/torqio/protodep/internal/auth"
+	"github.com/torqio/protodep/internal/logger"
 )
 
 type Config struct {
 	// UseHttps will force https on each proto dependencies fetch.
 	UseHttps bool
+
+	// UseGitCredentialsHelper will use git credentials helper for authentication.
+	UseGitCredentialsHelper bool
 
 	// UseNetrc will use netrc file for authentication.
 	UseNetrc bool
