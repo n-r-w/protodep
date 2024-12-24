@@ -1,10 +1,12 @@
 protodep - dependency tool for Protocol Buffers IDL file (.proto) vendoring tool
 =======
 
-## Evolution of <https://github.com/stormcat24/protodep>, which unfortunately has not been updated by the author for a long time
+## Evolution of <https://github.com/n-r-w/protodep>, which is the evolution of <https://github.com/stormcat24/protodep>
 
-## What's new in this fork (compared to the original project)
+## What's new in this fork (compared to n-r-w fork)
+- [x] Added support for git credential helpers
 
+### Stuff added in n-r-w's fork
 - [x] Added support for .netrc file
 - [x] Added support for local proto files import
 - [x] Added support for gitlab subgroups
@@ -22,7 +24,7 @@ If you manage proto files in a git repository, what will you do? Most remote ser
 ### go install
 
 ```bash
-go install -v github.com/n-r-w/protodep@latest
+go install -v github.com/torqio/protodep@latest
 ```
 
 ## Usage

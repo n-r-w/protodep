@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	"github.com/n-r-w/protodep/internal/auth"
+	"github.com/torqio/protodep/internal/auth"
 )
 
 func TestSync(t *testing.T) {

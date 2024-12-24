@@ -8,9 +8,9 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 
-	"github.com/n-r-w/protodep/internal/auth"
-	"github.com/n-r-w/protodep/internal/config"
-	"github.com/n-r-w/protodep/internal/logger"
+	"github.com/torqio/protodep/internal/auth"
+	"github.com/torqio/protodep/internal/config"
+	"github.com/torqio/protodep/internal/logger"
 )
 
 const masterBranch = "master"
