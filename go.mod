@@ -1,4 +1,4 @@
-module github.com/n-r-w/protodep
+module github.com/torqio/protodep
 
 go 1.23
 

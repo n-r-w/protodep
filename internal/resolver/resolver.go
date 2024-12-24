@@ -1,16 +1,17 @@
 package resolver
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/gobwas/glob"
-	"github.com/n-r-w/protodep/internal/auth"
-	"github.com/n-r-w/protodep/internal/config"
-	"github.com/n-r-w/protodep/internal/logger"
-	"github.com/n-r-w/protodep/internal/repository"
+	"github.com/torqio/protodep/internal/auth"
+	"github.com/torqio/protodep/internal/config"
+	"github.com/torqio/protodep/internal/logger"
+	"github.com/torqio/protodep/internal/repository"
 )
 
 type protoResource struct {
@@ -21,8 +22,9 @@ type protoResource struct {
 type Resolver struct {
 	conf *Config
 
-	httpsProvider auth.AuthProvider
-	sshProvider   auth.AuthProvider
+	httpsProvider          auth.AuthProvider
+	sshProvider            auth.AuthProvider
+	gitCredentialsProvider Credentials
 
 	netrcInfo []netrcLine
 }
@@ -40,6 +42,14 @@ func New(conf *Config, httpsProvider, sshProvider auth.AuthProvider) (*Resolver,
 	}
 
 	s.netrcInfo = netrcInfo
+
+	// try to parse git credentials
+	gitCredentialsProvider, err := ParseGitCredentials()
+	if err != nil {
+		logger.Error("failed to parse git credentials: %v", err)
+	}
+
+	s.gitCredentialsProvider = gitCredentialsProvider
 
 	return s, nil
 }
@@ -151,15 +161,40 @@ func (s *Resolver) getRepository(dep config.ProtoDepDependency, protodepDir stri
 		if userPassword == "" {
 			return nil, fmt.Errorf("auth_password_env %s is empty", dep.PasswordEnv)
 		}
+	} else if s.conf.UseGitCredentialsHelper && s.gitCredentialsProvider != nil {
+		targetRepo := dep.Repository()
+		if s.conf.UseHttps {
+			targetRepo = "https://" + targetRepo
+		}
+
+		cred := s.gitCredentialsProvider.Get(targetRepo)
+		if cred != nil {
+			evalutedCreds, err := cred.Evaluate(targetRepo)
+			if err != nil {
+				if !errors.Is(err, ErrNoCredentialHelperFound) {
+					logger.Warn("failed to evaluate git credentials for %s: %v", targetRepo, err)
+				}
+			} else {
+				logger.Info("using git credentials for %s", targetRepo)
+				userName = evalutedCreds.Username
+				userPassword = evalutedCreds.Password
+			}
+		}
 	} else if s.conf.UseNetrc {
 		machine := dep.Machine()
 
+		machineFound := false
 		for _, netrc := range s.netrcInfo {
 			if netrc.machine == machine && netrc.login != "" && netrc.password != "" {
 				userName = netrc.login
 				userPassword = netrc.password
+				machineFound = true
 				break
 			}
+		}
+
+		if !machineFound {
+			return nil, fmt.Errorf("machine %s not found in netrc", machine)
 		}
 	}
 
