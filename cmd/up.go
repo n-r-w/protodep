@@ -118,6 +118,7 @@ func initDepCmd() {
 	upCmd.PersistentFlags().BoolP("use-https", "u", true, "use HTTPS to get dependencies.")
 	upCmd.PersistentFlags().BoolP("use-netrc", "n", false, "use netrc file for authentication")
 	upCmd.PersistentFlags().BoolP("use-git-credentials", "m", true, "use git credentials for authentication")
+	upCmd.PersistentFlags().BoolP("force", "f", true, "force (deprecated)")
 
 	upCmd.PersistentFlags().StringP("basic-auth-username", "", "", "set the username with Basic Auth via HTTPS")
 	upCmd.PersistentFlags().StringP("basic-auth-password", "", "", "set the password or personal access token(when enabled 2FA) with Basic Auth via HTTPS")
