@@ -140,6 +140,10 @@ func (c *CredentialConfigEntry) Evaluate(repoURL string) (*GitCredential, error)
 	}
 
 	for _, helperName := range c.Helper {
+		if helperName == "" {
+			continue
+		}
+
 		cred, err = invokeCredentialHelper(helperName, "get", cred)
 		if err != nil {
 			return nil, err
