@@ -28,20 +28,24 @@ jobs:
           release_name: Release ${{ github.ref }}
           draft: false
           prerelease: false
-      - name: Upload Release Assets
+      - name: Upload Release Asset Linux
         uses: actions/upload-release-asset@v1
-        strategy:
-          matrix:
-            include:
-              - asset_path: ./artifacts/protodep_linux_amd64.tar.gz
-                asset_name: protodep_linux_amd64.tar.gz
-              - asset_path: ./artifacts/protodep_darwin_arm64.tar.gz
-                asset_name: protodep_darwin_arm64.tar.gz
-        id: upload-release-asset-${{ matrix.asset_name }}
+        id: upload-release-asset-linux
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ matrix.asset_path }}
-          asset_name: ${{ matrix.asset_name }}
+          asset_path: ./artifacts/protodep_linux_amd64.tar.gz
+          asset_name: protodep_linux_amd64.tar.gz
+          asset_content_type: application/tar
+
+      - name: Upload Release Asset Darwin
+        uses: actions/upload-release-asset@v1
+        id: upload-release-asset-darwin
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./artifacts/protodep_darwin_arm64.tar.gz
+          asset_name: protodep_darwin_arm64.tar.gz
           asset_content_type: application/tar
