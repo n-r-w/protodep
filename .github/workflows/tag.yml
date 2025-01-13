@@ -1,48 +1,47 @@
 on:
-    push:
-      # Sequence of patterns matched against refs/tags
-      tags:
+  push:
+    tags:
       - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
 
-  name: Upload Release Asset
+name: Upload Release Asset
 
-  jobs:
-    build:
-      name: Upload Release Asset
-      runs-on: ubuntu-latest
-      steps:
-        - name: Checkout code
-          uses: actions/checkout@v4
-        - uses: actions/setup-go@v5
-          with:
-            go-version-file: 'go.mod'
-        - name: Build project # This would actually build your project, using zip for an example artifact
-          run: |
-            make build-all
-        - name: Create Release
-          id: create_release
-          uses: actions/create-release@v1
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          with:
-            tag_name: ${{ github.ref }}
-            release_name: Release ${{ github.ref }}
-            draft: false
-            prerelease: false
-        - name: Upload Release Assets
-          uses: actions/upload-release-asset@v1
-          strategy:
-            matrix:
-              include:
-                - asset_path: ./artifacts/protodep_linux_amd64.tar.gz
-                  asset_name: protodep_linux_amd64.tar.gz
-                - asset_path: ./artifacts/protodep_darwin_arm64.tar.gz
-                  asset_name: protodep_darwin_arm64.tar.gz
-          id: upload-release-asset-${{ matrix.asset_name }}
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          with:
-            upload_url: ${{ steps.create_release.outputs.upload_url }}
-            asset_path: ${{ matrix.asset_path }}
-            asset_name: ${{ matrix.asset_name }}
-            asset_content_type: application/tar
+jobs:
+  build:
+    name: Upload Release Asset
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+      - name: Build project # This would actually build your project, using zip for an example artifact
+        run: |
+          make build-all
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+      - name: Upload Release Assets
+        uses: actions/upload-release-asset@v1
+        strategy:
+          matrix:
+            include:
+              - asset_path: ./artifacts/protodep_linux_amd64.tar.gz
+                asset_name: protodep_linux_amd64.tar.gz
+              - asset_path: ./artifacts/protodep_darwin_arm64.tar.gz
+                asset_name: protodep_darwin_arm64.tar.gz
+        id: upload-release-asset-${{ matrix.asset_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ matrix.asset_path }}
+          asset_name: ${{ matrix.asset_name }}
+          asset_content_type: application/tar
