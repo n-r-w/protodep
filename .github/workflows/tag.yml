@@ -14,6 +14,8 @@ on:
         - name: Checkout code
           uses: actions/checkout@v4
         - uses: actions/setup-go@v5
+          with:
+            go-version-file: 'go.mod'
         - name: Build project # This would actually build your project, using zip for an example artifact
           run: |
             make build-all
