@@ -12,6 +12,9 @@ type Config struct {
 	// UseHttps will force https on each proto dependencies fetch.
 	UseHttps bool
 
+	// UseGitCredentialsHelper will use git credentials helper for authentication.
+	UseGitCredentialsHelper bool
+
 	// UseNetrc will use netrc file for authentication.
 	UseNetrc bool
 

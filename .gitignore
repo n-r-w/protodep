@@ -32,3 +32,6 @@ bin/
 
 artifacts/
 proto/
+
+# vscode debug binary
+__debug_bin* 
