@@ -47,6 +47,12 @@ var upCmd = &cobra.Command{
 		}
 		logger.Info("use netrc = %t", useNetrc)
 
+		useGitCredentials, err := cmd.Flags().GetBool("use-git-credentials")
+		if err != nil {
+			return err
+		}
+		logger.Info("use git credentials = %t", useGitCredentials)
+
 		basicAuthUsername, err := cmd.Flags().GetString("basic-auth-username")
 		if err != nil {
 			return err
@@ -74,15 +80,16 @@ var upCmd = &cobra.Command{
 		}
 
 		conf := resolver.Config{
-			UseHttps:          useHTTPS,
-			UseNetrc:          useNetrc,
-			HomeDir:           homeDir,
-			TargetDir:         pwd,
-			OutputDir:         pwd,
-			BasicAuthUsername: basicAuthUsername,
-			BasicAuthPassword: basicAuthPassword,
-			IdentityFile:      identityFile,
-			IdentityPassword:  password,
+			UseHttps:                useHTTPS,
+			UseGitCredentialsHelper: useGitCredentials,
+			UseNetrc:                useNetrc,
+			HomeDir:                 homeDir,
+			TargetDir:               pwd,
+			OutputDir:               pwd,
+			BasicAuthUsername:       basicAuthUsername,
+			BasicAuthPassword:       basicAuthPassword,
+			IdentityFile:            identityFile,
+			IdentityPassword:        password,
 		}
 
 		httpsProvider, err := conf.GetHttpsAuthProvider()
@@ -110,6 +117,7 @@ func initDepCmd() {
 	upCmd.PersistentFlags().BoolP("cleanup", "c", false, "cleanup cache before exec.")
 	upCmd.PersistentFlags().BoolP("use-https", "u", false, "use HTTPS to get dependencies.")
 	upCmd.PersistentFlags().BoolP("use-netrc", "n", true, "use netrc file for authentication")
+	upCmd.PersistentFlags().BoolP("use-git-credentials", "m", true, "use git credentials for authentication")
 	upCmd.PersistentFlags().StringP("basic-auth-username", "", "", "set the username with Basic Auth via HTTPS")
 	upCmd.PersistentFlags().StringP("basic-auth-password", "", "", "set the password or personal access token(when enabled 2FA) with Basic Auth via HTTPS")
 }

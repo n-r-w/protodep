@@ -1,6 +1,7 @@
 package resolver
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -21,8 +22,9 @@ type protoResource struct {
 type Resolver struct {
 	conf *Config
 
-	httpsProvider auth.AuthProvider
-	sshProvider   auth.AuthProvider
+	httpsProvider          auth.AuthProvider
+	sshProvider            auth.AuthProvider
+	gitCredentialsProvider Credentials
 
 	netrcInfo []netrcLine
 }
@@ -40,6 +42,14 @@ func New(conf *Config, httpsProvider, sshProvider auth.AuthProvider) (*Resolver,
 	}
 
 	s.netrcInfo = netrcInfo
+
+	// try to parse git credentials
+	gitCredentialsProvider, err := ParseGitCredentials()
+	if err != nil {
+		logger.Error("failed to parse git credentials: %v", err)
+	}
+
+	s.gitCredentialsProvider = gitCredentialsProvider
 
 	return s, nil
 }
@@ -130,7 +140,7 @@ func (s *Resolver) Resolve(cleanupCache bool) error { //nolint:gocognit
 	return nil
 }
 
-func (s *Resolver) getRepository(dep config.ProtoDepDependency, protodepDir string) (*repository.Git, error) {
+func (s *Resolver) getRepository(dep config.ProtoDepDependency, protodepDir string) (*repository.Git, error) { //nolint:gocognit
 	var (
 		authProvider           auth.AuthProvider
 		userName, userPassword string
@@ -151,14 +161,51 @@ func (s *Resolver) getRepository(dep config.ProtoDepDependency, protodepDir stri
 		if userPassword == "" {
 			return nil, fmt.Errorf("auth_password_env %s is empty", dep.PasswordEnv)
 		}
-	} else if s.conf.UseNetrc {
-		machine := dep.Machine()
 
-		for _, netrc := range s.netrcInfo {
-			if netrc.machine == machine && netrc.login != "" && netrc.password != "" {
-				userName = netrc.login
-				userPassword = netrc.password
-				break
+		logger.Info("using name and password from environment variables")
+
+	} else {
+		if s.conf.UseGitCredentialsHelper && s.gitCredentialsProvider != nil {
+			targetRepo := dep.Repository()
+			if s.conf.UseHttps {
+				targetRepo = "https://" + targetRepo
+			}
+
+			cred := s.gitCredentialsProvider.Get(targetRepo)
+			if cred != nil {
+				evalutedCreds, err := cred.Evaluate(targetRepo)
+				if err != nil {
+					if errors.Is(err, ErrNoCredentialHelperFound) {
+						logger.Info("no git credential found for %s", targetRepo)
+					} else {
+						logger.Warn("failed to evaluate git credentials for %s: %v", targetRepo, err)
+					}
+				} else {
+					logger.Info("using git credentials for %s", targetRepo)
+					userName = evalutedCreds.Username
+					userPassword = evalutedCreds.Password
+				}
+			}
+		}
+
+		if userName == "" && s.conf.UseNetrc {
+			// if we didn't find a machine in .netrc, then just ignore it
+			machine := dep.Machine()
+
+			found := false
+			for _, netrc := range s.netrcInfo {
+				if netrc.machine == machine && netrc.login != "" && netrc.password != "" {
+					userName = netrc.login
+					userPassword = netrc.password
+					found = true
+					break
+				}
+			}
+
+			if found {
+				logger.Info("using .netrc entry for %s", machine)
+			} else {
+				logger.Info("no .netrc entry found for %s", machine)
 			}
 		}
 	}
@@ -176,6 +223,10 @@ func (s *Resolver) getRepository(dep config.ProtoDepDependency, protodepDir stri
 			}
 			authProvider = s.sshProvider
 		}
+	}
+
+	if authProvider == nil {
+		return nil, fmt.Errorf("no auth provider found")
 	}
 
 	return repository.NewGit(protodepDir, dep, authProvider), nil
