@@ -14,7 +14,7 @@ protodep helps you manage Protocol Buffer dependencies in microservice architect
 ## Key Features
 
 - **Multiple Authentication Methods**:
-  - Git credential helpers support
+  - Git credential helpers support (taken from <https://github.com/torqio/protodep>)
   - .netrc file authentication
   - SSH key authentication  
   - HTTPS with basic auth
