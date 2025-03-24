@@ -3,7 +3,7 @@ module github.com/n-r-w/protodep
 go 1.23
 
 require (
-	github.com/BurntSushi/toml v1.4.0
+	github.com/BurntSushi/toml v1.5.0
 	github.com/briandowns/spinner v1.23.2
 	github.com/fatih/color v1.18.0
 	github.com/go-git/go-git/v5 v5.13.2
